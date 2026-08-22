@@ -11,7 +11,7 @@ CGO_ENABLED = "0"
 run = [
     { task = "modules" },
     { task = "build" },
-    { task = "lint" },
+    { task = "check" },
 ]
 
 [tasks.modules]
@@ -20,5 +20,11 @@ run = "go mod tidy"
 [tasks.build]
 run = "go build -trimpath -v -o /dev/null ./..."
 
+[tasks.check]
+depends = [ "lint", "test" ]
+
 [tasks.lint]
 run = "golangci-lint run"
+
+[tasks.test]
+run = "go test ./..."

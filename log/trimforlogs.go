@@ -6,15 +6,14 @@ import (
 	"strings"
 )
 
-// TrimForLogOptions - config for TrimForLogs
-type TrimForLogOptions struct {
+type TrimForLogsOptions struct {
 	MaxStringLength      int
 	MaxSliceLength       int
 	SensitiveFields      []string
 	SensitivePlaceholder string
 }
 
-var DefaultTrimForLogsOpts = TrimForLogOptions{
+var DefaultTrimForLogsOpts = TrimForLogsOptions{
 	MaxStringLength:      100,
 	MaxSliceLength:       10,
 	SensitivePlaceholder: "(SENSITIVE)",
@@ -23,7 +22,7 @@ var DefaultTrimForLogsOpts = TrimForLogOptions{
 // TrimForLogs marshals v to a generic JSON-like structure, truncates strings/slices exceeding
 // configured limits, and replaces values of SensitiveFields with SensitivePlaceholder.
 // Returns v as-is if it cannot be marshaled.
-func TrimForLogs(v any, opts TrimForLogOptions) any {
+func TrimForLogs(v any, opts TrimForLogsOptions) any {
 	raw, err := json.Marshal(v)
 	if err != nil {
 		return v
@@ -42,7 +41,7 @@ func TrimForLogs(v any, opts TrimForLogOptions) any {
 	return trimValue(decoded, opts, sensitive)
 }
 
-func trimValue(v any, opts TrimForLogOptions, sensitive map[string]struct{}) any {
+func trimValue(v any, opts TrimForLogsOptions, sensitive map[string]struct{}) any {
 	switch val := v.(type) {
 	case map[string]any:
 		return trimMap(val, opts, sensitive)
@@ -55,7 +54,7 @@ func trimValue(v any, opts TrimForLogOptions, sensitive map[string]struct{}) any
 	}
 }
 
-func trimMap(m map[string]any, opts TrimForLogOptions, sensitive map[string]struct{}) map[string]any {
+func trimMap(m map[string]any, opts TrimForLogsOptions, sensitive map[string]struct{}) map[string]any {
 	result := make(map[string]any, len(m))
 	for key, value := range m {
 		if _, ok := sensitive[strings.ToLower(key)]; ok {
@@ -67,7 +66,7 @@ func trimMap(m map[string]any, opts TrimForLogOptions, sensitive map[string]stru
 	return result
 }
 
-func trimSlice(s []any, opts TrimForLogOptions, sensitive map[string]struct{}) []any {
+func trimSlice(s []any, opts TrimForLogsOptions, sensitive map[string]struct{}) []any {
 	kept := s
 	omitted := 0
 	if opts.MaxSliceLength > 0 && len(s) > opts.MaxSliceLength {

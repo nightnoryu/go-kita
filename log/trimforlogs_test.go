@@ -19,48 +19,48 @@ func TestTrimForLogs(t *testing.T) {
 	})
 
 	t.Run("non-string non-slice non-map values pass through unchanged", func(t *testing.T) {
-		result := TrimForLogs(42, TrimForLogOptions{})
+		result := TrimForLogs(42, TrimForLogsOptions{})
 		assert.Equal(t, float64(42), result) //nolint:testifylint // exact deterministic value, not a computed float
 	})
 
 	t.Run("string within limit is unchanged", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxStringLength: 10}
+		opts := TrimForLogsOptions{MaxStringLength: 10}
 		result := TrimForLogs("short", opts)
 		assert.Equal(t, "short", result)
 	})
 
 	t.Run("string over limit is truncated", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxStringLength: 5}
+		opts := TrimForLogsOptions{MaxStringLength: 5}
 		result := TrimForLogs("this is a long string", opts)
 		assert.Equal(t, "this ...(truncated)", result)
 	})
 
 	t.Run("zero max string length disables truncation", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxStringLength: 0}
+		opts := TrimForLogsOptions{MaxStringLength: 0}
 		result := TrimForLogs("arbitrarily long string value", opts)
 		assert.Equal(t, "arbitrarily long string value", result)
 	})
 
 	t.Run("slice within limit is unchanged", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxSliceLength: 5}
+		opts := TrimForLogsOptions{MaxSliceLength: 5}
 		result := TrimForLogs([]int{1, 2, 3}, opts)
 		assert.Equal(t, []any{float64(1), float64(2), float64(3)}, result)
 	})
 
 	t.Run("slice over limit is truncated with omitted count marker", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxSliceLength: 2}
+		opts := TrimForLogsOptions{MaxSliceLength: 2}
 		result := TrimForLogs([]int{1, 2, 3, 4, 5}, opts)
 		assert.Equal(t, []any{float64(1), float64(2), "... (3 more)"}, result)
 	})
 
 	t.Run("zero max slice length disables truncation", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxSliceLength: 0}
+		opts := TrimForLogsOptions{MaxSliceLength: 0}
 		result := TrimForLogs([]int{1, 2, 3}, opts)
 		assert.Equal(t, []any{float64(1), float64(2), float64(3)}, result)
 	})
 
 	t.Run("sensitive fields are replaced case-insensitively", func(t *testing.T) {
-		opts := TrimForLogOptions{
+		opts := TrimForLogsOptions{
 			SensitiveFields:      []string{"Password", "token"},
 			SensitivePlaceholder: "[REDACTED]",
 		}
@@ -78,7 +78,7 @@ func TestTrimForLogs(t *testing.T) {
 	})
 
 	t.Run("sensitive fields are redacted at nested levels", func(t *testing.T) {
-		opts := TrimForLogOptions{
+		opts := TrimForLogsOptions{
 			SensitiveFields:      []string{"secret"},
 			SensitivePlaceholder: "[REDACTED]",
 		}
@@ -102,7 +102,7 @@ func TestTrimForLogs(t *testing.T) {
 	})
 
 	t.Run("nested strings and slices are trimmed recursively", func(t *testing.T) {
-		opts := TrimForLogOptions{MaxStringLength: 3, MaxSliceLength: 1}
+		opts := TrimForLogsOptions{MaxStringLength: 3, MaxSliceLength: 1}
 		input := map[string]any{
 			"list": []string{"abcdef", "ghijkl"},
 		}

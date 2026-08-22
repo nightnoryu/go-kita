@@ -83,7 +83,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - cadence
+        - github.com/nightnoryu/go-kita
 
     gci:
       custom-order: true

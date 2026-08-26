@@ -8,6 +8,13 @@
 
 Go Kita is an SDK for building Go microservices.
 
+## Goals
+
+- Eliminate repetitive infrastructure plumbing
+- Reuse recurring patterns in my projects
+
+This is **not** a production-grade kit, I use this exclusively in my Go pet projects.
+
 ## Features
 
 - Structured JSON logging based on [zap](https://github.com/uber-go/zap)
@@ -15,6 +22,8 @@ Go Kita is an SDK for building Go microservices.
 - PostgreSQL connectivity with custom migrator and connection pool based on [pgx](https://github.com/jackc/pgx)
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
 - Generic slices functions
+
+Check README in each package for more details.
 
 ## License
 

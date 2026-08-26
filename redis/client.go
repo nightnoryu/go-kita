@@ -17,6 +17,11 @@ type ScoredMember struct {
 	Score  float64
 }
 
+type Config struct {
+	MaxConnections     int
+	ConnectionLifetime time.Duration
+}
+
 // Client is a convenience interface over the subset of Redis commands used by the application.
 type Client interface {
 	Get(ctx context.Context, key string) (string, error)
@@ -33,11 +38,13 @@ type Client interface {
 	Close() error
 }
 
-func NewClient(cfg Config) Client {
+func NewClient(dsn DSN, cfg Config) Client {
 	return &client{rdb: goredis.NewClient(&goredis.Options{
-		Addr:     cfg.addr(),
-		Password: cfg.Password,
-		DB:       cfg.DB,
+		Addr:            dsn.Addr(),
+		Password:        dsn.Password,
+		DB:              dsn.DB,
+		MaxActiveConns:  cfg.MaxConnections,
+		ConnMaxLifetime: cfg.ConnectionLifetime,
 	})}
 }
 

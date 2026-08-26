@@ -1,14 +1,16 @@
 package redis
 
-import "fmt"
+import (
+	"fmt"
+)
 
-type Config struct {
+type DSN struct {
 	Host     string
 	Port     int
 	Password string
 	DB       int
 }
 
-func (c Config) addr() string {
+func (c DSN) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }

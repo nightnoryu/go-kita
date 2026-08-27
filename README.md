@@ -3,7 +3,9 @@
   <h1>Go Kita</h1>
 </div>
 
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/nightnoryu/go-kita)](https://github.com/nightnoryu/go-kita/blob/main/go.mod)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nightnoryu/go-kita.svg)](https://pkg.go.dev/github.com/nightnoryu/go-kita)
+[![GitHub License](https://img.shields.io/github/license/nightnoryu/go-kita)](https://github.com/nightnoryu/go-kita/blob/main/LICENSE)
 [![Build Status](https://github.com/nightnoryu/go-kita/actions/workflows/validate.yml/badge.svg)](https://github.com/nightnoryu/go-kita/actions/workflows/validate.yml)
 
 Go Kita is an SDK for building Go microservices.

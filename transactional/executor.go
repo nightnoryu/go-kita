@@ -1,6 +1,9 @@
 package transactional
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type UnitOfWork interface {
 	Complete(err error) error
@@ -26,13 +29,17 @@ func (e *executor[TRepoProvider]) Execute(ctx context.Context, fn func(repoProvi
 }
 
 func (e *executor[TRepoProvider]) ExecuteWithLock(ctx context.Context, lockName string, fn func(repoProvider TRepoProvider) error) (err error) {
-	unitOfWork, err := e.transactionFactory.NewLockableTransaction(ctx, lockName)
+	transaction, err := e.transactionFactory.NewLockableTransaction(ctx, lockName)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = unitOfWork.Complete(err)
+		if r := recover(); r != nil {
+			err = transaction.Complete(fmt.Errorf("panic: %v", r))
+			panic(r)
+		}
+		err = transaction.Complete(err)
 	}()
-	err = fn(unitOfWork)
+	err = fn(transaction)
 	return err
 }

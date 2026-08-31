@@ -28,7 +28,16 @@ func NewLogger(config *Config) log.MainLogger {
 func (l *logger) WithFields(fields log.Fields) log.Logger {
 	implFields := make([]zap.Field, 0, len(fields))
 	for key, value := range fields {
-		implFields = append(implFields, zap.Any(key, value))
+		switch v := value.(type) {
+		case string:
+			implFields = append(implFields, zap.String(key, v))
+		case int:
+			implFields = append(implFields, zap.Int(key, v))
+		case bool:
+			implFields = append(implFields, zap.Bool(key, v))
+		default:
+			implFields = append(implFields, zap.Any(key, value))
+		}
 	}
 	return &logger{l.With(implFields...)}
 }

@@ -17,6 +17,7 @@ func main() {
 		Level:   jsonlog.InfoLevel,
 		AppName: "test",
 	})
+	defer logger.Sync()
 
 	fields := log.Fields{
 		"duration": "1s",
@@ -28,5 +29,4 @@ func main() {
 
 	logger.FatalError("fatal error")
 }
-
 ```

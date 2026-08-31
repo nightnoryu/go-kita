@@ -17,6 +17,7 @@ func main() {
 		Level:   jsonlog.InfoLevel,
 		AppName: "test",
 	})
+	defer logger.Sync()
 	
 	options := log.DefaultTrimForLogsOpts
 	options.SensitiveFields = []string{

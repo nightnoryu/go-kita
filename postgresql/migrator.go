@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io/fs"
 	"regexp"
 	"sort"
@@ -75,7 +76,7 @@ func (m migrator) MigrateUp() (err error) {
 	}
 	for _, version := range appliedVersions {
 		if _, ok := fileVersions[version]; !ok {
-			return errors.Wrapf(err, "migration %s is applied but its file is missing from data/migrations", version)
+			return fmt.Errorf("migration %s is applied but its file is missing from data/migrations", version)
 		}
 	}
 
@@ -111,7 +112,7 @@ func (m migrator) applyMigration(ctx context.Context, conn *sqlx.Conn, f migrati
 
 	if _, err = tx.ExecContext(ctx, string(content)); err != nil {
 		_ = tx.Rollback()
-		return errors.Wrap(err, "failed to execute migration: %w")
+		return errors.Wrap(err, "failed to execute migration")
 	}
 
 	if _, err = tx.ExecContext(ctx, "INSERT INTO schema_migration (version) VALUES ($1)", f.version); err != nil {

@@ -1,8 +1,8 @@
 # log
 
-General logging utilities.
+Logging abstractions and helpers shared across services.
 
-## TrimForLogs example
+## Example
 
 ```go
 package main
@@ -17,26 +17,19 @@ func main() {
 		Level:   jsonlog.InfoLevel,
 		AppName: "test",
 	})
-	defer logger.Sync()
-	
-	options := log.DefaultTrimForLogsOpts
-	options.SensitiveFields = []string{
-		"Password",
-		"password",
-		"secret",
-	}
-	options.SensitivePlaceholder = "HIDDEN"
+	defer func() { _ = logger.Sync() }()
+
+	opts := log.DefaultTrimForLogsOpts
+	opts.SensitiveFields = []string{"password", "secret"} // matched case-insensitively
+	opts.SensitivePlaceholder = "HIDDEN"
 
 	params := map[string]string{
 		"not_sensitive": "test",
-		"password": "correct horse battery staple",
-    }
-	
-	fields := log.Fields{
-		"args": log.TrimForLogs(params, options),
+		"Password":      "correct horse battery staple",
 	}
 
-	loggerWithRequestFields := logger.WithFields(fields)
-	loggerWithRequestFields.Info("call finished")
+	logger.
+		WithFields(log.Fields{"args": log.TrimForLogs(params, opts)}).
+		Info("call finished")
 }
 ```

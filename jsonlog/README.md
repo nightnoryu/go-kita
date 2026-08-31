@@ -1,6 +1,15 @@
 # jsonlog
 
-Structured JSON logging.
+Structured JSON logging: a [zap](https://github.com/uber-go/zap)-backed implementation of `log.MainLogger`.
+
+## Behavior notes
+
+- `Debug` / `Info` join their variadic args with `fmt.Sprint`.
+- `Error(err, args...)` and `FatalError(err, args...)` attach `err` as a structured `error` field; `FatalError` then
+  exits the process via `os.Exit(1)`.
+- `WithFields` emits `string`, `int`, and `bool` values with typed zap fields and falls back to `zap.Any` for everything
+  else. Keys are sorted, so field order in the output is deterministic.
+- `Sync` (from `log.MainLogger`) flushes zap's buffer; call it with `defer` in `main`.
 
 ## Example
 
@@ -8,6 +17,8 @@ Structured JSON logging.
 package main
 
 import (
+	"errors"
+
 	"github.com/nightnoryu/go-kita/jsonlog"
 	"github.com/nightnoryu/go-kita/log"
 )
@@ -17,16 +28,14 @@ func main() {
 		Level:   jsonlog.InfoLevel,
 		AppName: "test",
 	})
-	defer logger.Sync()
+	defer func() { _ = logger.Sync() }()
 
-	fields := log.Fields{
-		"duration": "1s",
-		"method":   "GET /test",
-	}
+	logger.
+		WithFields(log.Fields{"duration": "1s", "method": "GET /test"}).
+		Info("call finished")
 
-	loggerWithRequestFields := logger.WithFields(fields)
-	loggerWithRequestFields.Info("call finished")
+	logger.Error(errors.New("db timeout"), "query failed")
 
-	logger.FatalError("fatal error")
+	// logger.FatalError(errors.New("boot failed"), "cannot start") // logs, then os.Exit(1)
 }
 ```

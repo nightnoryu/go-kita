@@ -23,6 +23,7 @@ This is **not** a production-grade kit, I use this exclusively in my Go pet proj
 - Maybe monad implementation with distinct Absent and None value semantics
 - PostgreSQL connectivity with custom migrator and connection pool based on [pgx](https://github.com/jackc/pgx)
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
+- Environment variables parsing based on [caarlos0/env](https://github.com/caarlos0/env)
 - Generic slices functions
 
 Check README in each package for more details.

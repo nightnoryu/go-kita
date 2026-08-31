@@ -3,6 +3,7 @@ module github.com/nightnoryu/go-kita
 go 1.26
 
 require (
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/go-faster/errors v0.8.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jmoiron/sqlx v1.4.0

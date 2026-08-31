@@ -2,6 +2,7 @@ package jsonlog
 
 import (
 	"fmt"
+	"sort"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -27,8 +28,8 @@ func NewLogger(config *Config) log.MainLogger {
 
 func (l *logger) WithFields(fields log.Fields) log.Logger {
 	implFields := make([]zap.Field, 0, len(fields))
-	for key, value := range fields {
-		switch v := value.(type) {
+	for _, key := range buildOrderedFieldKeys(fields) {
+		switch v := fields[key].(type) {
 		case string:
 			implFields = append(implFields, zap.String(key, v))
 		case int:
@@ -36,7 +37,7 @@ func (l *logger) WithFields(fields log.Fields) log.Logger {
 		case bool:
 			implFields = append(implFields, zap.Bool(key, v))
 		default:
-			implFields = append(implFields, zap.Any(key, value))
+			implFields = append(implFields, zap.Any(key, fields[key]))
 		}
 	}
 	return &logger{l.With(implFields...)}
@@ -56,4 +57,13 @@ func (l *logger) Error(err error, args ...any) {
 
 func (l *logger) FatalError(err error, args ...any) {
 	l.With(zap.Error(err)).Fatal(fmt.Sprint(args...))
+}
+
+func buildOrderedFieldKeys(fields log.Fields) []string {
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }

@@ -51,7 +51,7 @@ func (m migrator) MigrateUp() (err error) {
 	defer func() {
 		closeErr := conn.Close()
 		if closeErr != nil && !errors.Is(closeErr, sql.ErrConnDone) {
-			err = errors.Join(err, conn.Close())
+			err = errors.Join(err, closeErr)
 		}
 	}()
 

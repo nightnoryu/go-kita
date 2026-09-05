@@ -1,23 +1,26 @@
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/07235b5a-1a5e-467d-a7f9-a8662d6d0e24" alt="Logo" width="100" />
-  <h1>Go Kita</h1>
-</div>
+<p align="center"><img src="https://github.com/user-attachments/assets/07235b5a-1a5e-467d-a7f9-a8662d6d0e24" width="160" title="Go Kita Logo"></p>
 
-[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/nightnoryu/go-kita)](https://github.com/nightnoryu/go-kita/blob/main/go.mod)
-[![Go Reference](https://pkg.go.dev/badge/github.com/nightnoryu/go-kita.svg)](https://pkg.go.dev/github.com/nightnoryu/go-kita)
-[![GitHub License](https://img.shields.io/github/license/nightnoryu/go-kita)](https://github.com/nightnoryu/go-kita/blob/main/LICENSE)
-[![Build Status](https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml/badge.svg)](https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://github.com/nightnoryu/go-kita/releases"><img src="https://img.shields.io/github/release/nightnoryu/go-kita.svg?cache-control=no-cache" /></a>
+  <a href="https://pkg.go.dev/github.com/nightnoryu/go-kita"><img src="https://pkg.go.dev/badge/github.com/nightnoryu/go-kita.svg?cache-control=no-cache"></a>
+  <a href="https://github.com/nightnoryu/go-kita/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nightnoryu/go-kita?cache-control=no-cache"></a>
+  <a href="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml"><img src="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml/badge.svg?cache-control=no-cache"></a>
+</p>
 
-Go Kita is an SDK for building Go microservices.
+Go Kita is a lightweight SDK for building microservices without rewriting the same infrastructure boilerplate.
 
-## Goals
+## 🎯 Why
 
-- Eliminate repetitive infrastructure plumbing
-- Reuse recurring patterns in my projects
+I kept rewriting the same infrastructure code across my Go projects.
+Go Kita is an attempt to extract those patterns into a small, reusable toolkit.
 
-This is **not** a production-grade kit, I use this exclusively in my Go pet projects.
+The project also serves as a playground for experimenting with microservice infrastructure.
 
-## Features
+> [!NOTE]
+> Go Kita is primarily built for my own side projects and is not intended
+> to be a general-purpose production framework.
+
+## ✨ Features
 
 - Structured JSON logging based on [zap](https://github.com/uber-go/zap)
 - Maybe monad implementation with distinct Absent and None value semantics
@@ -28,6 +31,28 @@ This is **not** a production-grade kit, I use this exclusively in my Go pet proj
 
 Check README in each package for more details.
 
-## License
+## 🚀 Quick Start
+
+```shell
+go get github.com/nightnoryu/go-kita@latest
+```
+
+## 🛠 Local Development
+
+### Prerequisites
+
+- [mise](https://mise.jdx.dev)
+
+### First Steps
+
+```shell
+git clone https://github.com/nightnoryu/go-kita
+cd go-kita
+
+# Build, lint and run unit tests
+mise run
+```
+
+## 📜 License
 
 Distributed under the MIT License. See [License](/LICENSE) for more information.

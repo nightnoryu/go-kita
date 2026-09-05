@@ -1,7 +1,7 @@
 <p align="center"><img src="https://github.com/user-attachments/assets/07235b5a-1a5e-467d-a7f9-a8662d6d0e24" width="160" title="Go Kita Logo"></p>
 
 <p align="center">
-  <a href="https://github.com/nightnoryu/go-kita/releases"><img src="https://img.shields.io/github/release/nightnoryu/go-kita.svg?cache-control=no-cache" /></a>
+  <a href="https://github.com/nightnoryu/go-kita/releases"><img src="https://img.shields.io/github/release/nightnoryu/go-kita.svg?cache-control=no-cache"></a>
   <a href="https://pkg.go.dev/github.com/nightnoryu/go-kita"><img src="https://pkg.go.dev/badge/github.com/nightnoryu/go-kita.svg?cache-control=no-cache"></a>
   <a href="https://github.com/nightnoryu/go-kita/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nightnoryu/go-kita?cache-control=no-cache"></a>
   <a href="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml"><img src="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml/badge.svg?cache-control=no-cache"></a>

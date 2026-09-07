@@ -38,6 +38,63 @@ Check README in each package for more details.
 go get github.com/nightnoryu/go-kita@latest
 ```
 
+A small example that wires several packages together — config from the
+environment, structured logging, graceful shutdown, and a slice helper:
+
+```go
+package main
+
+import (
+	"context"
+
+	"github.com/nightnoryu/go-kita/env"
+	"github.com/nightnoryu/go-kita/jsonlog"
+	"github.com/nightnoryu/go-kita/log"
+	"github.com/nightnoryu/go-kita/runtime"
+	"github.com/nightnoryu/go-kita/slices"
+)
+
+type config struct {
+	Debug   bool `env:"DEBUG" envDefault:"false"`
+	Workers int  `env:"WORKERS" envDefault:"4"`
+}
+
+func main() {
+	// Reads MYAPP_DEBUG, MYAPP_WORKERS.
+	cfg, err := env.ParseEnv[config]("myapp")
+	if err != nil {
+		panic(err)
+	}
+
+	level := jsonlog.InfoLevel
+	if cfg.Debug {
+		level = jsonlog.DebugLevel
+	}
+
+	logger := jsonlog.NewLogger(&jsonlog.Config{
+		Level:   level,
+		AppName: "myapp",
+	})
+	defer func() { _ = logger.Sync() }()
+
+	// Canceled on SIGINT / SIGTERM — pass it down and shut down gracefully.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = runtime.ListenOSKillSignals(ctx)
+
+	ids := slices.Map([]int{1, 2, 3}, func(i int) string {
+		return "worker-" + string(rune('0'+i))
+	})
+
+	logger.
+		WithFields(log.Fields{"workers": cfg.Workers, "ids": ids}).
+		Info("service started")
+
+	<-ctx.Done()
+	logger.Info("service stopped")
+}
+```
+
 ## 🛠 Local Development
 
 ### Prerequisites

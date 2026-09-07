@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0
+
+- `runtime` package added
+
 ## v1.3.0
 
 - `env` package added

@@ -9,15 +9,18 @@ CGO_ENABLED = "0"
 
 [tasks.default]
 run = [
-    { task = "modules" },
     { task = "build" },
     { task = "check" },
 ]
 
 [tasks.modules]
+run = "go mod download"
+
+[tasks.tidy]
 run = "go mod tidy"
 
 [tasks.build]
+depends = [ "modules" ]
 run = "go build -trimpath -v -o /dev/null ./..."
 
 [tasks.check]

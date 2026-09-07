@@ -95,7 +95,7 @@ func main() {
 }
 ```
 
-## 🛠 Local Development
+## ⚒️ Local Development
 
 ### Prerequisites
 

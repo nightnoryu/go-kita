@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/go-faster/errors v0.8.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/stretchr/testify v1.12.1

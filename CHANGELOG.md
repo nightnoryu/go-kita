@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.0
+
+- `jsonlog` now logs time in RFC3339 format with `time` field name instead of standard `ts`
+
 ## v1.4.0
 
 - `runtime` package added

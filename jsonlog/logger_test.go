@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,6 +30,24 @@ func TestNewLogger(t *testing.T) {
 	assert.Equal(t, "info", entries[0]["level"])
 	assert.Equal(t, "hello", entries[0]["msg"])
 	assert.Equal(t, "test-app", entries[0]["app_name"])
+}
+
+func TestNewLogger_EncodesTimeAsRFC3339(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		output := captureStderr(t, func() {
+			l := NewLogger(&Config{Level: InfoLevel, AppName: "test-app"})
+			l.Info("hello")
+		})
+
+		entries := decodeLines(t, output)
+		require.Len(t, entries, 1)
+		timestamp, ok := entries[0][timeKey].(string)
+		require.True(t, ok, "time must be encoded as an RFC3339 string")
+
+		got, err := time.Parse(time.RFC3339Nano, timestamp)
+		require.NoError(t, err)
+		assert.True(t, got.Equal(time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)))
+	})
 }
 
 func TestLogger_Debug(t *testing.T) {

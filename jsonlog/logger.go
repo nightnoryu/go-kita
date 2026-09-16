@@ -10,7 +10,10 @@ import (
 	"github.com/nightnoryu/go-kita/log"
 )
 
-const appNameKey = "app_name"
+const (
+	appNameKey = "app_name"
+	timeKey    = "time"
+)
 
 type logger struct {
 	*zap.Logger
@@ -18,8 +21,13 @@ type logger struct {
 
 func NewLogger(config *Config) log.MainLogger {
 	implConfig := zap.NewProductionConfig()
+
 	implConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Level))
 	implConfig.DisableCaller = true
+
+	implConfig.EncoderConfig.TimeKey = timeKey
+	implConfig.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+
 	impl := zap.Must(implConfig.Build())
 	return &logger{
 		Logger: impl.With(zap.String(appNameKey, config.AppName)),

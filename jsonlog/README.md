@@ -4,6 +4,7 @@ Structured JSON logging: a [zap](https://github.com/uber-go/zap)-backed implemen
 
 ## Behavior notes
 
+- Time is printed in RFC3339 format: `{"time": "2026-09-16T08:26:12.3456789+03:00"}` - consider this when implementing logs parsing
 - `Debug` / `Info` join their variadic args with `fmt.Sprint`.
 - `Error(err, args...)` and `FatalError(err, args...)` attach `err` as a structured `error` field; `FatalError` then
   exits the process via `os.Exit(1)`.

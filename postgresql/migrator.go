@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS schema_migration (
     executed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 )`
 
+const (
+	migrationAdvisoryLockID int64 = 0x00676f2d6b697461 // "go-kita"
+	acquireMigrationLockSQL       = "SELECT pg_advisory_lock($1)"
+	releaseMigrationLockSQL       = "SELECT pg_advisory_unlock($1)"
+)
+
 var migrationFileRegexp = regexp.MustCompile(`^(\d+)_(.+)\.up\.sql$`)
 
 type Migrator interface {
@@ -53,6 +59,16 @@ func (m migrator) MigrateUp() (err error) {
 		closeErr := conn.Close()
 		if closeErr != nil && !errors.Is(closeErr, sql.ErrConnDone) {
 			err = errors.Join(err, closeErr)
+		}
+	}()
+
+	if _, err = conn.ExecContext(ctx, acquireMigrationLockSQL, migrationAdvisoryLockID); err != nil {
+		return errors.Wrap(err, "failed to acquire migration advisory lock")
+	}
+
+	defer func() {
+		if _, unlockErr := conn.ExecContext(ctx, releaseMigrationLockSQL, migrationAdvisoryLockID); unlockErr != nil {
+			err = errors.Join(err, errors.Wrap(unlockErr, "failed to release migration advisory lock"))
 		}
 	}()
 

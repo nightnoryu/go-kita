@@ -18,7 +18,9 @@ versions and to run the normal validation flow:
 mise run          # download modules, build all packages, lint, and test
 mise run build    # compile ./... without creating a binary
 mise run lint     # run golangci-lint, including formatters
-mise run test     # run go test ./...
+mise run test     # run normal tests across ./...
+mise run test:race # run focused race-detector tests
+mise run check    # lint plus normal and race-detector tests
 mise run tidy     # update go.mod and go.sum when dependencies change
 ```
 
@@ -39,8 +41,12 @@ small, package-scoped APIs over cross-package abstractions.
 Use the standard `testing` package with `testify` where assertions improve
 readability. Name test files `*_test.go` and test functions `TestThing` or
 `TestThing_Condition`. Cover success paths, errors, and boundary cases for
-changed behavior. There is no stated coverage threshold; all affected package
-tests and `mise run test` must pass before review.
+changed behavior. Assess changes involving concurrency or shared mutable state
+for race-detector coverage. Put race-only tests in `*_race_test.go` files with
+the `//go:build race` constraint, then add their package to the `test:race`
+Mise task; `go test -race` enables that build tag. There is no stated coverage
+threshold; all affected package tests and `mise run check` must pass before
+review.
 
 ## Commit & Pull Request Guidelines
 

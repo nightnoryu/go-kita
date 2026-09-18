@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.0
+
+- `postgresql` connector startup now verifies connectivity with a context-aware
+  timeout, safely cleans up failed handles, and supports pool configuration
+- `postgresql` migrations now accept a context, use configurable advisory-lock
+  IDs, validate and numerically order migration files, and preserve cleanup
+  errors
+
 ## v1.5.0
 
 - `jsonlog` now logs time in RFC3339 format with `time` field name instead of standard `ts`

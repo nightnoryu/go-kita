@@ -3,6 +3,35 @@
 `Connector` owns its database handle and closes it with `Close`. A
 `TransactionalClient` borrows that handle; it must not be closed by callers.
 
+Open a connector with `Open(ctx, dsn, config)`. It configures the pool and
+calls `PingContext` before returning, so a successful call represents a usable
+database connection rather than only a parsed DSN. `ConnectTimeout` bounds
+that initial ping when positive; zero adds no deadline beyond the caller's
+context and a negative value is rejected. If validation fails, the newly opened
+handle is closed and the validation and close errors are joined.
+
+All pool settings default to `database/sql` defaults when zero: unlimited open
+connections, the driver's normal idle-connection default, and no maximum
+connection or idle lifetime. Set positive `MaxOpenConnections`,
+`MaxIdleConnections`, `ConnectionMaxLifetime`, and `ConnectionMaxIdleTime` to
+override them. Negative settings are rejected. `MaxConnections` and
+`ConnectionLifetime` remain compatibility aliases for the corresponding
+explicit fields.
+
+`Migrator.MigrateUp(ctx)` uses the caller's context for acquiring a connection,
+waiting for its advisory lock, schema queries, and migration transactions.
+Canceling the context therefore interrupts lock and connection waits. Migration
+files must be regular files named
+`<numeric-version>_<name>.up.sql`; versions are ordered numerically and two
+filenames with the same numeric version (including differently zero-padded
+forms) are rejected before any database mutation. An applied version whose
+file is missing remains an error. Set `MigrationAdvisoryLockID` to a stable,
+application-specific value when unrelated applications share a cluster; zero
+uses Go Kita's legacy default lock ID. If the caller context is canceled after
+the lock is acquired, cleanup uses a separate five-second context to release
+the session lock; if release fails, the connection is discarded rather than
+returned to the pool with a possibly held lock.
+
 `ConnectionProvider.Connection(ctx)` acquires a distinct `*sql.Conn` for every
 call. Context identity never controls sharing. The caller owns the returned
 connection and must call `Close`, normally with `defer` immediately after a

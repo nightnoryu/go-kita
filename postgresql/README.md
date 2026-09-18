@@ -2,6 +2,9 @@
 
 `Connector` owns its database handle and closes it with `Close`. A
 `TransactionalClient` borrows that handle; it must not be closed by callers.
+`Connector` also implements the narrow `Pinger` interface through
+`Ping(ctx)`, which is suitable for readiness checks without exposing query or
+transaction operations.
 
 Open a connector with `Open(ctx, dsn, config)`. It configures the pool and
 calls `PingContext` before returning, so a successful call represents a usable

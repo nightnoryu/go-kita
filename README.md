@@ -28,6 +28,7 @@ The project also serves as a playground for experimenting with microservice infr
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
 - Environment variables parsing based on [caarlos0/env](https://github.com/caarlos0/env)
 - Runtime helpers
+- Router-agnostic health and readiness handlers
 - Generic slices functions
 
 Check README in each package for more details.

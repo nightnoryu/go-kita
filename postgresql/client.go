@@ -13,6 +13,13 @@ type ClientContext interface {
 	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
+// Pinger is the narrow database capability required by readiness checks.
+// Callers should prefer depending on this interface instead of a broader
+// database client when they only need to verify connectivity.
+type Pinger interface {
+	Ping(ctx context.Context) error
+}
+
 type Transaction interface {
 	ClientContext
 	Commit() error
@@ -36,6 +43,10 @@ type TransactionalClient interface {
 
 type transactionalClient struct {
 	*sqlx.DB
+}
+
+func (t *transactionalClient) Ping(ctx context.Context) error {
+	return t.PingContext(ctx)
 }
 
 func (t *transactionalClient) BeginTransaction(ctx context.Context, opts *sql.TxOptions) (Transaction, error) {

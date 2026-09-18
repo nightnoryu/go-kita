@@ -24,6 +24,8 @@ type Config struct {
 
 // Client is a convenience interface over the subset of Redis commands used by the application.
 type Client interface {
+	// Ping verifies that Redis is reachable using ctx.
+	Ping(ctx context.Context) error
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key, value string, ttl time.Duration) error
 	Expire(ctx context.Context, key string, ttl time.Duration) error
@@ -50,6 +52,10 @@ func NewClient(dsn DSN, cfg Config) Client {
 
 type client struct {
 	rdb *goredis.Client
+}
+
+func (c *client) Ping(ctx context.Context) error {
+	return c.rdb.Ping(ctx).Err()
 }
 
 func (c *client) Get(ctx context.Context, key string) (string, error) {

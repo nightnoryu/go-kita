@@ -51,6 +51,9 @@ type Connector interface {
 	// Open configures the pool and verifies connectivity before returning. The
 	// connector owns the resulting handle and callers must Close it.
 	Open(ctx context.Context, dsn DSN, cfg Config) error
+	// Ping verifies database connectivity using ctx. It is the narrow capability
+	// applications can use for readiness checks.
+	Ping(ctx context.Context) error
 	TransactionalClient() TransactionalClient
 	Migrator(logger log.Logger, migrationsFS fs.FS) (Migrator, error)
 	Close() error
@@ -59,6 +62,13 @@ type Connector interface {
 type connector struct {
 	db                      *sqlx.DB
 	migrationAdvisoryLockID int64
+}
+
+func (c *connector) Ping(ctx context.Context) error {
+	if c.db == nil {
+		return stderrors.New("postgresql: database not initialized")
+	}
+	return c.db.PingContext(ctx)
 }
 
 func (c *connector) Open(ctx context.Context, dsn DSN, cfg Config) (err error) {

@@ -48,6 +48,17 @@ func TestConnector_OpenUsesTimeoutAndClosesHandleAfterFailedPing(t *testing.T) {
 	require.Error(t, c.Close())
 }
 
+func TestConnector_Ping(t *testing.T) {
+	state := registerConnectorTestDriver(t, nil)
+	connector := NewConnector()
+	require.NoError(t, connector.Open(context.Background(), DSN{}, Config{}))
+	t.Cleanup(func() { require.NoError(t, connector.Close()) })
+
+	var pinger Pinger = connector
+	require.NoError(t, pinger.Ping(context.Background()))
+	require.Equal(t, 2, state.pingCalls())
+}
+
 type connectorTestDriver struct {
 	state *connectorTestDriverState
 }

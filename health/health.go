@@ -106,6 +106,7 @@ func NewReadinessHandler(cfg ReadinessConfig) (http.Handler, error) {
 			select {
 			case err := <-results:
 				if err != nil {
+					cancel()
 					writeUnavailable(w)
 					return
 				}
@@ -143,7 +144,7 @@ func validateReadinessConfig(cfg ReadinessConfig) error {
 
 func withTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 	if timeout == 0 {
-		return ctx, func() {}
+		return context.WithCancel(ctx)
 	}
 	return context.WithTimeout(ctx, timeout)
 }

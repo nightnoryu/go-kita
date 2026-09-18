@@ -2,6 +2,7 @@ package transactional
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -38,7 +39,12 @@ func (e *executor[TRepoProvider]) ExecuteWithLock(ctx context.Context, lockName 
 			err = transaction.Complete(fmt.Errorf("panic: %v", r))
 			panic(r)
 		}
-		err = transaction.Complete(err)
+		completeErr := transaction.Complete(err)
+		if err == nil {
+			err = completeErr
+		} else if completeErr != nil && !errors.Is(completeErr, err) {
+			err = errors.Join(err, completeErr)
+		}
 	}()
 	err = fn(transaction)
 	return err

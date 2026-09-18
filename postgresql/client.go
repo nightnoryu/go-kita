@@ -27,7 +27,10 @@ type TransactionalConnection interface {
 
 type TransactionalClient interface {
 	ClientContext
-	BeginTransaction() (Transaction, error)
+	// BeginTransaction starts a transaction on the database using ctx and opts.
+	// Unlike a TransactionalConnection, a client may start independent
+	// transactions concurrently.
+	BeginTransaction(ctx context.Context, opts *sql.TxOptions) (Transaction, error)
 	Connection(ctx context.Context) (TransactionalConnection, error)
 }
 
@@ -35,8 +38,8 @@ type transactionalClient struct {
 	*sqlx.DB
 }
 
-func (t *transactionalClient) BeginTransaction() (Transaction, error) {
-	return t.Beginx()
+func (t *transactionalClient) BeginTransaction(ctx context.Context, opts *sql.TxOptions) (Transaction, error) {
+	return t.BeginTxx(ctx, opts)
 }
 
 func (t *transactionalClient) Connection(ctx context.Context) (TransactionalConnection, error) {

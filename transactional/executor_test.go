@@ -13,12 +13,13 @@ type fakeUnitOfWork struct {
 	completeErr    error
 	completeCalled bool
 	completeWith   error
+	returnInput    bool
 }
 
 func (f *fakeUnitOfWork) Complete(err error) error {
 	f.completeCalled = true
 	f.completeWith = err
-	if err != nil {
+	if err != nil && f.returnInput {
 		return err
 	}
 	return f.completeErr
@@ -109,4 +110,19 @@ func TestExecuteWithLock_FnPanics_RollsBackAndRepanics(t *testing.T) {
 
 	assert.True(t, uow.completeCalled)
 	assert.Error(t, uow.completeWith)
+}
+
+func TestExecuteWithLock_PreservesCallbackAndCompletionErrors(t *testing.T) {
+	callbackErr := errors.New("callback failed")
+	completionErr := errors.New("rollback failed")
+	uow := &fakeUnitOfWork{completeErr: completionErr}
+	factory := &fakeFactory{uow: uow}
+	executor := NewExecutor[*fakeUnitOfWork](factory)
+
+	err := executor.Execute(context.Background(), func(*fakeUnitOfWork) error {
+		return callbackErr
+	})
+
+	require.ErrorIs(t, err, callbackErr)
+	require.ErrorIs(t, err, completionErr)
 }

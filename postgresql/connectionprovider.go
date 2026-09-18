@@ -2,101 +2,105 @@ package postgresql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"sync"
 )
 
+var (
+	// ErrNestedTransaction is returned when a connection already has an active
+	// transaction. Nested transactions and concurrent transaction use of one
+	// connection are not supported.
+	ErrNestedTransaction = errors.New("postgresql: nested transactions are not supported")
+	ErrConnectionClosed  = errors.New("postgresql: connection is closed")
+)
+
+// ConnectionProvider acquires a new connection for every Connection call.
+// The caller owns the returned connection and must close it. Close is
+// idempotent, so a deferred Close is safe on all paths.
 type ConnectionProvider interface {
 	Connection(ctx context.Context) (TransactionalConnection, error)
 }
 
 func NewConnectionProvider(client TransactionalClient) ConnectionProvider {
-	return &connectionProvider{
-		client:         client,
-		connectionPool: map[context.Context]*connectionPoolEntry{},
-	}
+	return &connectionProvider{client: client}
 }
 
 type connectionProvider struct {
-	client         TransactionalClient
-	mu             sync.Mutex
-	connectionPool map[context.Context]*connectionPoolEntry
+	client TransactionalClient
 }
 
-type connectionPoolEntry struct {
-	connection *sharedConnection
-	count      uint
-}
-
-func (provider *connectionProvider) Connection(ctx context.Context) (conn TransactionalConnection, err error) {
-	provider.withLock(func() {
-		entry, ok := provider.connectionPool[ctx]
-		if !ok {
-			return
-		}
-
-		conn = entry.connection
-		entry.count++
-	})
-
-	if conn == nil {
-		conn, err = provider.client.Connection(ctx)
-		if err != nil {
-			return conn, err
-		}
-
-		sharedConn := &sharedConnection{
-			TransactionalConnection: conn,
-			ctx:                     ctx,
-			releaseCallback:         provider.releaseConnection,
-		}
-
-		conn = sharedConn
-
-		provider.withLock(func() {
-			provider.connectionPool[ctx] = &connectionPoolEntry{
-				connection: sharedConn,
-				count:      1,
-			}
-		})
+func (provider *connectionProvider) Connection(ctx context.Context) (TransactionalConnection, error) {
+	conn, err := provider.client.Connection(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return conn, err
+	return &managedConnection{TransactionalConnection: conn}, nil
 }
 
-func (provider *connectionProvider) releaseConnection(ctx context.Context) (err error) {
-	provider.withLock(func() {
-		entry, ok := provider.connectionPool[ctx]
-		if !ok {
-			return
-		}
-
-		if entry.count == 1 {
-			err = entry.connection.close()
-			delete(provider.connectionPool, ctx)
-			return
-		}
-		entry.count--
-	})
-	return
-}
-
-func (provider *connectionProvider) withLock(f func()) {
-	provider.mu.Lock()
-	defer provider.mu.Unlock()
-	f()
-}
-
-type sharedConnection struct {
+// managedConnection makes connection ownership explicit and prevents multiple
+// transactions from being started on the same acquired connection.
+type managedConnection struct {
 	TransactionalConnection
 
-	ctx             context.Context
-	releaseCallback func(ctx context.Context) error
+	mu                sync.Mutex
+	closed            bool
+	transactionActive bool
+	closeOnce         sync.Once
+	closeErr          error
 }
 
-func (conn *sharedConnection) Close() error {
-	return conn.releaseCallback(conn.ctx)
+func (conn *managedConnection) BeginTransaction(ctx context.Context, opts *sql.TxOptions) (Transaction, error) {
+	conn.mu.Lock()
+	defer conn.mu.Unlock()
+
+	if conn.closed {
+		return nil, ErrConnectionClosed
+	}
+	if conn.transactionActive {
+		return nil, ErrNestedTransaction
+	}
+
+	tx, err := conn.TransactionalConnection.BeginTransaction(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	conn.transactionActive = true
+	return &managedTransaction{Transaction: tx, release: conn.releaseTransaction}, nil
 }
 
-func (conn *sharedConnection) close() error {
-	return conn.TransactionalConnection.Close()
+func (conn *managedConnection) Close() error {
+	conn.closeOnce.Do(func() {
+		conn.mu.Lock()
+		conn.closed = true
+		conn.mu.Unlock()
+		conn.closeErr = conn.TransactionalConnection.Close()
+	})
+	return conn.closeErr
+}
+
+func (conn *managedConnection) releaseTransaction() {
+	conn.mu.Lock()
+	defer conn.mu.Unlock()
+	conn.transactionActive = false
+}
+
+type managedTransaction struct {
+	Transaction
+
+	releaseOnce sync.Once
+	release     func()
+}
+
+func (tx *managedTransaction) Commit() error {
+	err := tx.Transaction.Commit()
+	tx.releaseOnce.Do(tx.release)
+	return err
+}
+
+func (tx *managedTransaction) Rollback() error {
+	err := tx.Transaction.Rollback()
+	tx.releaseOnce.Do(tx.release)
+	return err
 }

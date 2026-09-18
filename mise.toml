@@ -2,11 +2,6 @@
 go = "1.26"
 golangci-lint = "2.12.2"
 
-[env]
-GOOS = "linux"
-GOARCH = "amd64"
-CGO_ENABLED = "0"
-
 [tasks.default]
 run = [
     { task = "build" },
@@ -30,4 +25,4 @@ depends = [ "lint", "test" ]
 run = "golangci-lint run"
 
 [tasks.test]
-run = "go test ./..."
+run = "go test -race ./..."

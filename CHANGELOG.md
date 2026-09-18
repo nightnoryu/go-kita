@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.0
+
+- `health` package added with concurrent, timeout-bound liveness and readiness
+  checks plus composable HTTP handlers
+- `redis.Client.Ping` and context-aware PostgreSQL ping support added for
+  readiness checks
+
 ## v1.6.0
 
 - `postgresql` connector startup now verifies connectivity with a context-aware

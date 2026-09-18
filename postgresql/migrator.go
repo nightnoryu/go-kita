@@ -3,10 +3,12 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"io/fs"
 	"regexp"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -25,29 +27,35 @@ const (
 	migrationAdvisoryLockID int64 = 0x00676f2d6b697461 // "go-kita"
 	acquireMigrationLockSQL       = "SELECT pg_advisory_lock($1)"
 	releaseMigrationLockSQL       = "SELECT pg_advisory_unlock($1)"
+	migrationCleanupTimeout       = 5 * time.Second
 )
 
 var migrationFileRegexp = regexp.MustCompile(`^(\d+)_(.+)\.up\.sql$`)
 
 type Migrator interface {
-	MigrateUp() error
+	// MigrateUp applies pending migrations using ctx for all database work,
+	// including waiting for the advisory lock.
+	MigrateUp(ctx context.Context) error
 }
 
 type migrator struct {
-	db     *sqlx.DB
-	logger log.Logger
-	fs     fs.FS
+	db             *sqlx.DB
+	logger         log.Logger
+	fs             fs.FS
+	advisoryLockID int64
 }
 
 type migrationFile struct {
 	version string
+	number  uint64
 	name    string
 	path    string
 }
 
-func (m migrator) MigrateUp() (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (m migrator) MigrateUp(ctx context.Context) (err error) {
+	if ctx == nil {
+		return fmt.Errorf("postgresql: nil context")
+	}
 
 	conn, err := m.db.Connx(ctx)
 	if err != nil {
@@ -62,23 +70,28 @@ func (m migrator) MigrateUp() (err error) {
 		}
 	}()
 
-	if _, err = conn.ExecContext(ctx, acquireMigrationLockSQL, migrationAdvisoryLockID); err != nil {
+	if _, err = conn.ExecContext(ctx, acquireMigrationLockSQL, m.advisoryLockID); err != nil {
 		return errors.Wrap(err, "failed to acquire migration advisory lock")
 	}
 
 	defer func() {
-		if _, unlockErr := conn.ExecContext(ctx, releaseMigrationLockSQL, migrationAdvisoryLockID); unlockErr != nil {
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), migrationCleanupTimeout)
+		defer cancel()
+		if _, unlockErr := conn.ExecContext(cleanupCtx, releaseMigrationLockSQL, m.advisoryLockID); unlockErr != nil {
 			err = errors.Join(err, errors.Wrap(unlockErr, "failed to release migration advisory lock"))
+			if discardErr := conn.Raw(func(any) error { return driver.ErrBadConn }); discardErr != nil {
+				err = errors.Join(err, errors.Wrap(discardErr, "failed to discard connection after advisory lock release failure"))
+			}
 		}
 	}()
-
-	if _, err = conn.ExecContext(ctx, createSchemaMigrationTableSQL); err != nil {
-		return errors.Wrap(err, "failed to create schema_migration table")
-	}
 
 	files, err := m.readMigrationFiles()
 	if err != nil {
 		return errors.Wrap(err, "failed to read migration files")
+	}
+
+	if _, err = conn.ExecContext(ctx, createSchemaMigrationTableSQL); err != nil {
+		return errors.Wrap(err, "failed to create schema_migration table")
 	}
 
 	var appliedVersions []string
@@ -127,13 +140,19 @@ func (m migrator) applyMigration(ctx context.Context, conn *sqlx.Conn, f migrati
 	start := time.Now()
 
 	if _, err = tx.ExecContext(ctx, string(content)); err != nil {
-		_ = tx.Rollback()
-		return errors.Wrap(err, "failed to execute migration")
+		execErr := errors.Wrap(err, "failed to execute migration")
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return errors.Join(execErr, errors.Wrap(rollbackErr, "failed to roll back migration"))
+		}
+		return execErr
 	}
 
 	if _, err = tx.ExecContext(ctx, "INSERT INTO schema_migration (version) VALUES ($1)", f.version); err != nil {
-		_ = tx.Rollback()
-		return errors.Wrap(err, "failed to record migration version")
+		recordErr := errors.Wrap(err, "failed to record migration version")
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return errors.Join(recordErr, errors.Wrap(rollbackErr, "failed to roll back migration"))
+		}
+		return recordErr
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -154,23 +173,37 @@ func (m migrator) readMigrationFiles() ([]migrationFile, error) {
 
 	files := make([]migrationFile, 0, len(entries))
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+		info, err := entry.Info()
+		if err != nil {
+			return nil, fmt.Errorf("read migration entry %q: %w", entry.Name(), err)
+		}
+		if !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("migration entry %q is not a regular file", entry.Name())
 		}
 		match := migrationFileRegexp.FindStringSubmatch(entry.Name())
 		if match == nil {
-			continue
+			return nil, fmt.Errorf("malformed migration filename %q: expected <version>_<name>.up.sql", entry.Name())
+		}
+		number, err := strconv.ParseUint(match[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("malformed migration version in filename %q: %w", entry.Name(), err)
 		}
 		files = append(files, migrationFile{
 			version: match[1],
+			number:  number,
 			name:    match[2],
 			path:    entry.Name(),
 		})
 	}
 
 	sort.Slice(files, func(i, j int) bool {
-		return files[i].version < files[j].version
+		return files[i].number < files[j].number
 	})
+	for i := 1; i < len(files); i++ {
+		if files[i-1].number == files[i].number {
+			return nil, fmt.Errorf("duplicate migration version %d in %q and %q", files[i].number, files[i-1].path, files[i].path)
+		}
+	}
 
 	return files, nil
 }

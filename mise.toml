@@ -19,10 +19,13 @@ depends = [ "modules" ]
 run = "go build -trimpath -v -o /dev/null ./..."
 
 [tasks.check]
-depends = [ "lint", "test" ]
+depends = [ "lint", "test", "test:race" ]
 
 [tasks.lint]
 run = "golangci-lint run"
 
 [tasks.test]
-run = "go test -race ./..."
+run = "go test ./..."
+
+[tasks."test:race"]
+run = "go test -race ./postgresql"

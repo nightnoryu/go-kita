@@ -1,3 +1,4 @@
+// Package jsonlog provides structured JSON logging backed by zap.
 package jsonlog
 
 type Config struct {

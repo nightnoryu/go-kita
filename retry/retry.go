@@ -1,3 +1,4 @@
+// Package retry provides context-aware retry scheduling with configurable policies.
 package retry
 
 import (

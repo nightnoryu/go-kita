@@ -1,3 +1,4 @@
+// Package slices provides generic helpers for transforming slices.
 package slices
 
 // Map iterates through slice and maps values

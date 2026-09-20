@@ -1,3 +1,4 @@
+// Package env parses application configuration from environment variables.
 package env
 
 import (

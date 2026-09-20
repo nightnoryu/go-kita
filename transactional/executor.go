@@ -1,3 +1,4 @@
+// Package transactional provides abstractions for executing units of work transactionally.
 package transactional
 
 import (

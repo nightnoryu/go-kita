@@ -1,3 +1,4 @@
+// Package redis provides a convenient client for common Redis operations.
 package redis
 
 import (

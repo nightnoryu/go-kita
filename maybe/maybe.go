@@ -1,3 +1,4 @@
+// Package maybe provides values with distinct absent, null, and present states.
 package maybe
 
 // state distinguishes the three possible states of a Maybe value.

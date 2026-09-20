@@ -1,3 +1,4 @@
+// Package postgresql provides PostgreSQL connectivity, migration, and transaction helpers.
 package postgresql
 
 import (

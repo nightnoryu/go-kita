@@ -1,3 +1,4 @@
+// Package log defines lightweight logging interfaces and helpers.
 package log
 
 type Fields map[string]any

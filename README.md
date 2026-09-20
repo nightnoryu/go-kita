@@ -27,9 +27,8 @@ The project also serves as a playground for experimenting with microservice infr
 - PostgreSQL connectivity with custom migrator and connection pool based on [pgx](https://github.com/jackc/pgx)
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
 - Environment variables parsing based on [caarlos0/env](https://github.com/caarlos0/env)
-- Runtime helpers
 - Router-agnostic health and readiness handlers
-- Generic slices functions
+- ... and a couple more
 
 Check README in each package for more details.
 
@@ -51,7 +50,6 @@ import (
 	"github.com/nightnoryu/go-kita/env"
 	"github.com/nightnoryu/go-kita/jsonlog"
 	"github.com/nightnoryu/go-kita/log"
-	"github.com/nightnoryu/go-kita/runtime"
 	"github.com/nightnoryu/go-kita/slices"
 )
 
@@ -76,11 +74,6 @@ func main() {
 	}
 	defer func() { _ = logger.Sync() }()
 
-	// Canceled on SIGINT / SIGTERM — pass it down and shut down gracefully.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = runtime.ListenOSKillSignals(ctx)
-
 	ids := slices.Map([]int{1, 2, 3}, func(i int) string {
 		return "worker-" + string(rune('0'+i))
 	})
@@ -88,9 +81,6 @@ func main() {
 	logger.
 		WithFields(log.Fields{"workers": cfg.Workers, "ids": ids}).
 		Info("service started")
-
-	<-ctx.Done()
-	logger.Info("service stopped")
 }
 ```
 

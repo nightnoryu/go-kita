@@ -4,8 +4,8 @@
 
 This is a Go 1.26 module: `github.com/nightnoryu/go-kita`. Each top-level
 directory is an importable package focused on one infrastructure concern:
-`env/`, `jsonlog/`, `log/`, `maybe/`, `postgresql/`, `redis/`, `runtime/`,
-`slices/`, and `transactional/`. Keep package code and its `*_test.go` files
+`env/`, `jsonlog/`, `log/`, `maybe/`, `postgresql/`, `redis/`, `slices/`,
+and `transactional/`. Keep package code and its `*_test.go` files
 together. Package-specific usage notes belong in that package's `README.md`;
 the root `README.md` describes the SDK as a whole.
 
@@ -50,7 +50,7 @@ review.
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses brief imperative subjects, such as `Add runtime package`,
+Recent history uses brief imperative subjects, such as `Add jsonlog package`,
 `Fix error handling`, and `Update README.md`. Keep commits focused and avoid
 unrelated formatting churn. Pull requests should explain the behavior change,
 identify affected packages, link relevant issues when available, and include

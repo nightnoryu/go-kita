@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `runtime` package removed - just use `signal.NotifyContext` instead
+
 ## v1.8.0
 
 - `jsonlog.NewLogger` now returns `(log.MainLogger, error)`; callers must handle

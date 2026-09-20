@@ -56,26 +56,24 @@ import (
 )
 
 type config struct {
-	Debug   bool `env:"DEBUG" envDefault:"false"`
-	Workers int  `env:"WORKERS" envDefault:"4"`
+	LogLevel jsonlog.Level `env:"LOG_LEVEL" envDefault:"info"`
+	Workers  int           `env:"WORKERS" envDefault:"4"`
 }
 
 func main() {
-	// Reads MYAPP_DEBUG, MYAPP_WORKERS.
+	// Reads MYAPP_LOG_LEVEL, MYAPP_WORKERS.
 	cfg, err := env.ParseEnv[config]("myapp")
 	if err != nil {
 		panic(err)
 	}
 
-	level := jsonlog.InfoLevel
-	if cfg.Debug {
-		level = jsonlog.DebugLevel
-	}
-
-	logger := jsonlog.NewLogger(&jsonlog.Config{
-		Level:   level,
+	logger, err := jsonlog.NewLogger(&jsonlog.Config{
+		Level:   cfg.LogLevel,
 		AppName: "myapp",
 	})
+	if err != nil {
+		panic(err)
+	}
 	defer func() { _ = logger.Sync() }()
 
 	// Canceled on SIGINT / SIGTERM — pass it down and shut down gracefully.

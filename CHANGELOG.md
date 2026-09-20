@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.8.0
+
+- `jsonlog.NewLogger` now returns `(log.MainLogger, error)`; callers must handle
+  invalid logger configuration
+- `log.Logger` now includes `Warn(...any)`
+- `env.ParseEnv` converts hyphens in application IDs to underscores when
+  constructing environment prefixes
+
 ## v1.7.0
 
 - `health` package added with concurrent, timeout-bound liveness and readiness

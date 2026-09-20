@@ -7,6 +7,7 @@ type Logger interface {
 	WithFields(Fields) Logger
 	Debug(...any)
 	Info(...any)
+	Warn(...any)
 	Error(error, ...any)
 }
 

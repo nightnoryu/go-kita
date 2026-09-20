@@ -1,6 +1,7 @@
 package jsonlog
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -19,7 +20,14 @@ type logger struct {
 	*zap.Logger
 }
 
-func NewLogger(config *Config) log.MainLogger {
+func NewLogger(config *Config) (log.MainLogger, error) {
+	if config == nil {
+		return nil, errors.New("jsonlog: config is nil")
+	}
+	if !config.Level.valid() {
+		return nil, fmt.Errorf("jsonlog: unsupported log level %d", config.Level)
+	}
+
 	implConfig := zap.NewProductionConfig()
 
 	implConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Level))
@@ -28,10 +36,13 @@ func NewLogger(config *Config) log.MainLogger {
 	implConfig.EncoderConfig.TimeKey = timeKey
 	implConfig.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 
-	impl := zap.Must(implConfig.Build())
+	impl, err := implConfig.Build()
+	if err != nil {
+		return nil, fmt.Errorf("build zap logger: %w", err)
+	}
 	return &logger{
 		Logger: impl.With(zap.String(appNameKey, config.AppName)),
-	}
+	}, nil
 }
 
 func (l *logger) WithFields(fields log.Fields) log.Logger {
@@ -57,6 +68,10 @@ func (l *logger) Debug(args ...any) {
 
 func (l *logger) Info(args ...any) {
 	l.Logger.Info(fmt.Sprint(args...))
+}
+
+func (l *logger) Warn(args ...any) {
+	l.Logger.Warn(fmt.Sprint(args...))
 }
 
 func (l *logger) Error(err error, args ...any) {

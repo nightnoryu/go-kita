@@ -13,10 +13,13 @@ import (
 )
 
 func main() {
-	logger := jsonlog.NewLogger(&jsonlog.Config{
+	logger, err := jsonlog.NewLogger(&jsonlog.Config{
 		Level:   jsonlog.InfoLevel,
 		AppName: "test",
 	})
+	if err != nil {
+		panic(err)
+	}
 	defer func() { _ = logger.Sync() }()
 
 	opts := log.DefaultTrimForLogsOpts
@@ -33,3 +36,6 @@ func main() {
 		Info("call finished")
 }
 ```
+
+`TrimForLogs` limits strings by bytes, not runes. Its default limits are 100 bytes per string and 10 elements per
+slice; a non-positive limit disables the respective truncation.

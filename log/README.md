@@ -2,6 +2,8 @@
 
 Logging abstractions and helpers shared across services.
 
+`NoopLogger` discards every entry and is useful in tests.
+
 ## Example
 
 ```go

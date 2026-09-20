@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `runtime` package removed - just use `signal.NotifyContext` instead
+- a dedicated `log.NoopLogger` added for consumer tests
 
 ## v1.8.0
 

@@ -4,6 +4,7 @@
 
 - `runtime` package removed - just use `signal.NotifyContext` instead
 - a dedicated `log.NoopLogger` added for consumer tests
+- `retry` package added for context-aware, configurable retry scheduling
 
 ## v1.8.0
 

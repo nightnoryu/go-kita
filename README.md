@@ -23,11 +23,12 @@ The project also serves as a playground for experimenting with microservice infr
 ## ✨ Features
 
 - Structured JSON logging based on [zap](https://github.com/uber-go/zap)
-- Maybe monad implementation with distinct Absent and None value semantics
 - PostgreSQL connectivity with custom migrator and connection pool based on [pgx](https://github.com/jackc/pgx)
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
 - Environment variables parsing based on [caarlos0/env](https://github.com/caarlos0/env)
 - Router-agnostic health and readiness handlers
+- Maybe monad implementation with distinct Absent and None value semantics
+- Context-aware retry scheduling with caller-defined retry policies
 - ... and a couple more
 
 Check README in each package for more details.

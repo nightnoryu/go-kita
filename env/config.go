@@ -10,7 +10,8 @@ import (
 // ParseEnv populates struct from environment variables
 func ParseEnv[T any](appID string) (*T, error) {
 	c := new(T)
-	if err := env.ParseWithOptions(c, env.Options{Prefix: strings.ToUpper(appID) + "_"}); err != nil {
+	prefix := strings.ToUpper(strings.ReplaceAll(appID, "-", "_")) + "_"
+	if err := env.ParseWithOptions(c, env.Options{Prefix: prefix}); err != nil {
 		return nil, errors.Wrap(err, "failed to parse env")
 	}
 	return c, nil

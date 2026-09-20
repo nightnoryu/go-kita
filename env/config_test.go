@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/nightnoryu/go-kita/jsonlog"
 )
 
 type testConfig struct {
@@ -34,6 +36,24 @@ func TestParseEnv(t *testing.T) {
 		cfg, err := ParseEnv[testConfig]("myapp")
 		require.NoError(t, err)
 		assert.Equal(t, "from-upper", cfg.Host)
+	})
+
+	t.Run("normalizes kebab-case app ids when building the prefix", func(t *testing.T) {
+		t.Setenv("MY_APP_HOST", "from-kebab-case")
+
+		cfg, err := ParseEnv[testConfig]("my-app")
+		require.NoError(t, err)
+		assert.Equal(t, "from-kebab-case", cfg.Host)
+	})
+
+	t.Run("uses TextUnmarshaler fields", func(t *testing.T) {
+		type loggingConfig struct {
+			Level jsonlog.Level `env:"LOG_LEVEL" envDefault:"warn"`
+		}
+
+		cfg, err := ParseEnv[loggingConfig]("myapp")
+		require.NoError(t, err)
+		assert.Equal(t, jsonlog.WarnLevel, cfg.Level)
 	})
 
 	t.Run("applies envDefault when the variable is unset", func(t *testing.T) {

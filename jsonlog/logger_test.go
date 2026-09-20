@@ -20,7 +20,7 @@ import (
 func TestNewLogger(t *testing.T) {
 	var l log.MainLogger
 	output := captureStderr(t, func() {
-		l = NewLogger(&Config{Level: InfoLevel, AppName: "test-app"})
+		l = newLogger(t, InfoLevel)
 		l.Info("hello")
 	})
 
@@ -29,13 +29,13 @@ func TestNewLogger(t *testing.T) {
 	require.Len(t, entries, 1)
 	assert.Equal(t, "info", entries[0]["level"])
 	assert.Equal(t, "hello", entries[0]["msg"])
-	assert.Equal(t, "test-app", entries[0]["app_name"])
+	assert.Equal(t, "app", entries[0]["app_name"])
 }
 
 func TestNewLogger_EncodesTimeAsRFC3339(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		output := captureStderr(t, func() {
-			l := NewLogger(&Config{Level: InfoLevel, AppName: "test-app"})
+			l := newLogger(t, InfoLevel)
 			l.Info("hello")
 		})
 
@@ -53,7 +53,7 @@ func TestNewLogger_EncodesTimeAsRFC3339(t *testing.T) {
 func TestLogger_Debug(t *testing.T) {
 	t.Run("emitted when level allows debug", func(t *testing.T) {
 		output := captureStderr(t, func() {
-			l := NewLogger(&Config{Level: DebugLevel, AppName: "app"})
+			l := newLogger(t, DebugLevel)
 			l.Debug("a", "b", 1)
 		})
 
@@ -65,7 +65,7 @@ func TestLogger_Debug(t *testing.T) {
 
 	t.Run("suppressed when level is above debug", func(t *testing.T) {
 		output := captureStderr(t, func() {
-			l := NewLogger(&Config{Level: InfoLevel, AppName: "app"})
+			l := newLogger(t, InfoLevel)
 			l.Debug("should not appear")
 		})
 
@@ -75,7 +75,7 @@ func TestLogger_Debug(t *testing.T) {
 
 func TestLogger_Info(t *testing.T) {
 	output := captureStderr(t, func() {
-		l := NewLogger(&Config{Level: InfoLevel, AppName: "app"})
+		l := newLogger(t, InfoLevel)
 		l.Info("call ", "finished")
 	})
 
@@ -87,7 +87,7 @@ func TestLogger_Info(t *testing.T) {
 
 func TestLogger_Error(t *testing.T) {
 	output := captureStderr(t, func() {
-		l := NewLogger(&Config{Level: InfoLevel, AppName: "app"})
+		l := newLogger(t, InfoLevel)
 		l.Error(errors.New("boom"), "op failed")
 	})
 
@@ -100,7 +100,7 @@ func TestLogger_Error(t *testing.T) {
 
 func TestLogger_WithFields(t *testing.T) {
 	output := captureStderr(t, func() {
-		l := NewLogger(&Config{Level: InfoLevel, AppName: "app"})
+		l := newLogger(t, InfoLevel)
 		withFields := l.WithFields(log.Fields{
 			"str_field":  "value",
 			"int_field":  42,
@@ -120,10 +120,36 @@ func TestLogger_WithFields(t *testing.T) {
 }
 
 func TestLogger_WithFields_ReturnsNewLogger(t *testing.T) {
-	l := NewLogger(&Config{Level: InfoLevel, AppName: "app"})
+	l := newLogger(t, InfoLevel)
 	withFields := l.WithFields(log.Fields{"key": "value"})
 
 	assert.NotSame(t, l, withFields)
+}
+
+func TestNewLogger_InvalidConfig(t *testing.T) {
+	_, err := NewLogger(nil)
+	require.Error(t, err)
+
+	_, err = NewLogger(&Config{Level: Level(99)})
+	require.Error(t, err)
+}
+
+func TestLogger_Warn(t *testing.T) {
+	output := captureStderr(t, func() {
+		newLogger(t, InfoLevel).Warn("slow request")
+	})
+
+	entries := decodeLines(t, output)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "warn", entries[0]["level"])
+	assert.Equal(t, "slow request", entries[0]["msg"])
+}
+
+func newLogger(t *testing.T, level Level) log.MainLogger {
+	t.Helper()
+	l, err := NewLogger(&Config{Level: level, AppName: "app"})
+	require.NoError(t, err)
+	return l
 }
 
 func captureStderr(t *testing.T, fn func()) string {

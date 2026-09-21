@@ -3,12 +3,15 @@ package redis
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
@@ -26,6 +29,57 @@ func TestClient_Ping(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, client.Close()) })
 	require.NoError(t, client.Ping(context.Background()))
 	require.NoError(t, <-done)
+}
+
+func TestOpenClient_Ping(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, listener.Close()) })
+
+	done := make(chan error, 1)
+	go func() { done <- servePing(listener) }()
+
+	address, ok := listener.Addr().(*net.TCPAddr)
+	require.True(t, ok)
+	client, err := OpenClient(context.Background(), DSN{Host: "127.0.0.1", Port: address.Port}, Config{})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, client.Close()) })
+	require.NoError(t, <-done)
+}
+
+func TestOptions(t *testing.T) {
+	tlsConfig := &tls.Config{ServerName: "cache.example.com", MinVersion: tls.VersionTLS12}
+	options := options(DSN{Host: "cache", Port: 6379, Password: "secret", DB: 2}, Config{
+		DialTimeout:           time.Second,
+		ReadTimeout:           2 * time.Second,
+		WriteTimeout:          3 * time.Second,
+		PoolTimeout:           4 * time.Second,
+		MaxActiveConnections:  5,
+		ConnectionMaxLifetime: 6 * time.Second,
+		TLSConfig:             tlsConfig,
+		MaxConnections:        7,
+		ConnectionLifetime:    8 * time.Second,
+	})
+
+	require.Equal(t, "cache:6379", options.Addr)
+	require.Equal(t, "secret", options.Password)
+	require.Equal(t, 2, options.DB)
+	require.Equal(t, time.Second, options.DialTimeout)
+	require.Equal(t, 2*time.Second, options.ReadTimeout)
+	require.Equal(t, 3*time.Second, options.WriteTimeout)
+	require.Equal(t, 4*time.Second, options.PoolTimeout)
+	require.Equal(t, 5, options.MaxActiveConns)
+	require.Equal(t, 6*time.Second, options.ConnMaxLifetime)
+	require.True(t, options.ContextTimeoutEnabled)
+	require.Equal(t, tlsConfig, options.TLSConfig)
+	require.NotSame(t, tlsConfig, options.TLSConfig)
+}
+
+func TestTranslateGetError(t *testing.T) {
+	require.ErrorIs(t, translateGetError(goredis.Nil), ErrKeyNotFound)
+
+	err := errors.New("redis unavailable")
+	require.ErrorIs(t, translateGetError(err), err)
 }
 
 func servePing(listener net.Listener) error {

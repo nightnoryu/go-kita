@@ -3,7 +3,9 @@ package redis
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"time"
 
 	goredis "github.com/redis/go-redis/v9"
@@ -19,11 +21,41 @@ type ScoredMember struct {
 }
 
 type Config struct {
-	MaxConnections     int
+	// DialTimeout bounds new TCP or TLS connections. Zero uses go-redis's
+	// default of five seconds.
+	DialTimeout time.Duration
+	// ReadTimeout bounds socket reads. Zero uses go-redis's default of five
+	// seconds. A context deadline sooner than this timeout takes precedence.
+	ReadTimeout time.Duration
+	// WriteTimeout bounds socket writes. Zero makes go-redis use ReadTimeout.
+	// A context deadline sooner than this timeout takes precedence.
+	WriteTimeout time.Duration
+	// PoolTimeout bounds waiting for an available pool connection. Zero uses
+	// go-redis's default of ReadTimeout plus one second.
+	PoolTimeout time.Duration
+	// MaxActiveConnections is the maximum number of connections allocated by the
+	// pool. Zero leaves the pool unlimited, which is go-redis's default.
+	MaxActiveConnections int
+	// ConnectionMaxLifetime is the maximum age of a pooled connection. Zero
+	// means connections do not expire because of age.
+	ConnectionMaxLifetime time.Duration
+	// TLSConfig enables TLS when non-nil. It is shallow-cloned when the client is
+	// created. Callers must not mutate referenced data after client creation.
+	TLSConfig *tls.Config
+
+	// MaxConnections is a deprecated compatibility alias for
+	// MaxActiveConnections. MaxActiveConnections takes precedence when non-zero.
+	MaxConnections int
+	// ConnectionLifetime is a deprecated compatibility alias for
+	// ConnectionMaxLifetime. ConnectionMaxLifetime takes precedence when
+	// non-zero.
 	ConnectionLifetime time.Duration
 }
 
-// Client is a convenience interface over the subset of Redis commands used by the application.
+// Client is a convenience interface over the Redis commands demonstrated by Go
+// Kita consumers. Applications should define narrower interfaces at their own
+// boundaries instead of depending on this interface when they need fewer
+// operations.
 type Client interface {
 	// Ping verifies that Redis is reachable using ctx.
 	Ping(ctx context.Context) error
@@ -42,13 +74,57 @@ type Client interface {
 }
 
 func NewClient(dsn DSN, cfg Config) Client {
-	return &client{rdb: goredis.NewClient(&goredis.Options{
-		Addr:            dsn.Addr(),
-		Password:        dsn.Password,
-		DB:              dsn.DB,
-		MaxActiveConns:  cfg.MaxConnections,
-		ConnMaxLifetime: cfg.ConnectionLifetime,
-	})}
+	return &client{rdb: goredis.NewClient(options(dsn, cfg))}
+}
+
+// OpenClient creates a client and verifies Redis connectivity before returning.
+// It uses ctx for the validation request and closes the client if validation
+// fails. Callers own and must Close a successfully returned client.
+func OpenClient(ctx context.Context, dsn DSN, cfg Config) (Client, error) {
+	if ctx == nil {
+		return nil, errors.New("redis: nil context")
+	}
+
+	client := NewClient(dsn, cfg)
+	if err := client.Ping(ctx); err != nil {
+		return nil, errors.Join(
+			fmt.Errorf("redis: verify connectivity: %w", err),
+			client.Close(),
+		)
+	}
+	return client, nil
+}
+
+func options(dsn DSN, cfg Config) *goredis.Options {
+	maxActiveConnections := cfg.MaxActiveConnections
+	if maxActiveConnections == 0 {
+		maxActiveConnections = cfg.MaxConnections
+	}
+	connectionMaxLifetime := cfg.ConnectionMaxLifetime
+	if connectionMaxLifetime == 0 {
+		connectionMaxLifetime = cfg.ConnectionLifetime
+	}
+
+	return &goredis.Options{
+		Addr:                  dsn.Addr(),
+		Password:              dsn.Password,
+		DB:                    dsn.DB,
+		DialTimeout:           cfg.DialTimeout,
+		ReadTimeout:           cfg.ReadTimeout,
+		WriteTimeout:          cfg.WriteTimeout,
+		PoolTimeout:           cfg.PoolTimeout,
+		MaxActiveConns:        maxActiveConnections,
+		ConnMaxLifetime:       connectionMaxLifetime,
+		TLSConfig:             cloneTLSConfig(cfg.TLSConfig),
+		ContextTimeoutEnabled: true,
+	}
+}
+
+func cloneTLSConfig(config *tls.Config) *tls.Config {
+	if config == nil {
+		return nil
+	}
+	return config.Clone()
 }
 
 type client struct {
@@ -61,10 +137,14 @@ func (c *client) Ping(ctx context.Context) error {
 
 func (c *client) Get(ctx context.Context, key string) (string, error) {
 	value, err := c.rdb.Get(ctx, key).Result()
+	return value, translateGetError(err)
+}
+
+func translateGetError(err error) error {
 	if errors.Is(err, goredis.Nil) {
-		return "", ErrKeyNotFound
+		return ErrKeyNotFound
 	}
-	return value, err
+	return err
 }
 
 func (c *client) Set(ctx context.Context, key, value string, ttl time.Duration) error {

@@ -5,6 +5,8 @@
 - `runtime` package removed - just use `signal.NotifyContext` instead
 - a dedicated `log.NoopLogger` added for consumer tests
 - `retry` package added for context-aware, configurable retry scheduling
+- Redis clients support startup connectivity validation, configurable socket and
+  pool timeouts, TLS, and context-bounded socket operations
 
 ## v1.8.0
 

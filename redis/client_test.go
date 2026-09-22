@@ -57,8 +57,6 @@ func TestOptions(t *testing.T) {
 		MaxActiveConnections:  5,
 		ConnectionMaxLifetime: 6 * time.Second,
 		TLSConfig:             tlsConfig,
-		MaxConnections:        7,
-		ConnectionLifetime:    8 * time.Second,
 	})
 
 	require.Equal(t, "cache:6379", options.Addr)

@@ -6,6 +6,13 @@
 must be reachable before the service begins accepting work. Both return a
 client owned by the caller, which must call `Close` during shutdown.
 
+`Config` has useful zero defaults. `DSN` must supply a host and port;
+`DSN.Addr` does not validate either field. Clients are safe for concurrent
+command use according to go-redis. Do not call commands after `Close`, and
+coordinate shutdown so in-flight application work has stopped before closing
+the client. `Close` returns any error reported by go-redis while releasing its
+pool resources.
+
 ```go
 cache, err := redis.OpenClient(ctx, redis.DSN{Host: "cache", Port: 6379}, redis.Config{
 	DialTimeout: time.Second,

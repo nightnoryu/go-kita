@@ -6,6 +6,13 @@
 `Ping(ctx)`, which is suitable for readiness checks without exposing query or
 transaction operations.
 
+`Connector` has no usable zero value; construct it with `NewConnector`. Do not
+call `Open`, `Close`, or create derived clients concurrently on the same
+connector. `Close` stops new work and waits for in-use database connections as
+defined by `database/sql`; callers should stop their HTTP server and background
+work before closing it. `TransactionalClient` is safe to share after a
+successful `Open`, subject to the normal `database/sql` guarantees.
+
 Open a connector with `Open(ctx, dsn, config)`. It configures the pool and
 calls `PingContext` before returning, so a successful call represents a usable
 database connection rather than only a parsed DSN. `ConnectTimeout` bounds
@@ -51,6 +58,13 @@ one `Commit` or `Rollback` before closing its connection.
 When composing a connection and transaction around application work, defer
 connection closure and roll back on an operation error. If cleanup can fail,
 use `errors.Join` to retain both the business and cleanup errors.
+
+`DSN.String` builds a PostgreSQL URL from its fields. It does not validate that
+the host, port, database, or credentials are present; connection errors are
+reported by `Open`. `Migrator` is created from an open connector and borrows
+its pool. It does not own the connector and must not outlive it. Run migrations
+once during startup; concurrent calls coordinate only through the configured
+database advisory lock.
 
 ## Transaction example
 

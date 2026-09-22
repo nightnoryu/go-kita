@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0
+## v1.9.0
 
 - document package ownership, context, concurrency, error, and shutdown
   behavior; add a runnable service composition example

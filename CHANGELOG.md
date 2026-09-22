@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased
+## v2.0.0
 
+- document package ownership, context, concurrency, error, and shutdown
+  behavior; add a runnable service composition example
+- `postgresql.Config.MaxConnections`, `postgresql.Config.ConnectionLifetime`,
+  `redis.Config.MaxConnections`, and `redis.Config.ConnectionLifetime` are
+  deprecated compatibility aliases
 - `runtime` package removed - just use `signal.NotifyContext` instead
 - a dedicated `log.NoopLogger` added for consumer tests
 - `retry` package added for context-aware, configurable retry scheduling

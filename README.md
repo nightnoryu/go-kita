@@ -23,7 +23,9 @@ The project also serves as a playground for experimenting with microservice infr
 ## ✨ Features
 
 - Structured JSON logging based on [zap](https://github.com/uber-go/zap)
-- PostgreSQL connectivity with custom migrator and connection pool based on [pgx](https://github.com/jackc/pgx)
+- PostgreSQL connectivity with a custom migrator and a `database/sql` pool
+  managed through [sqlx](https://github.com/jmoiron/sqlx), using the
+  [pgx](https://github.com/jackc/pgx) driver
 - Redis connectivity based on [go-redis](https://github.com/redis/go-redis)
 - Environment variables parsing based on [caarlos0/env](https://github.com/caarlos0/env)
 - Router-agnostic health and readiness handlers
@@ -31,7 +33,8 @@ The project also serves as a playground for experimenting with microservice infr
 - Context-aware retry scheduling with caller-defined retry policies
 - ... and a couple more
 
-Check README in each package for more details.
+Check the README in each package for more details. Also see
+[`examples/service`](examples/service) for a complete service wiring example.
 
 ## 🚀 Quick Start
 

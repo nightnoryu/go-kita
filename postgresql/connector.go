@@ -35,12 +35,6 @@ type Config struct {
 	// MigrationAdvisoryLockID identifies this application's migration set. Zero
 	// uses Go Kita's legacy default lock ID.
 	MigrationAdvisoryLockID int64
-
-	// MaxConnections and ConnectionLifetime are deprecated compatibility aliases
-	// for MaxOpenConnections and ConnectionMaxLifetime. The explicit fields take
-	// precedence when both are set.
-	MaxConnections     int
-	ConnectionLifetime time.Duration
 }
 
 func NewConnector() Connector {
@@ -113,10 +107,10 @@ func validateConfig(cfg Config) error {
 	if cfg.ConnectTimeout < 0 {
 		return fmt.Errorf("postgresql: connect timeout must not be negative")
 	}
-	if cfg.MaxOpenConnections < 0 || cfg.MaxIdleConnections < 0 || cfg.MaxConnections < 0 {
+	if cfg.MaxOpenConnections < 0 || cfg.MaxIdleConnections < 0 {
 		return fmt.Errorf("postgresql: connection counts must not be negative")
 	}
-	if cfg.ConnectionMaxLifetime < 0 || cfg.ConnectionMaxIdleTime < 0 || cfg.ConnectionLifetime < 0 {
+	if cfg.ConnectionMaxLifetime < 0 || cfg.ConnectionMaxIdleTime < 0 {
 		return fmt.Errorf("postgresql: connection durations must not be negative")
 	}
 	return nil
@@ -124,9 +118,6 @@ func validateConfig(cfg Config) error {
 
 func configurePool(db *sqlx.DB, cfg Config) {
 	maxOpenConnections := cfg.MaxOpenConnections
-	if maxOpenConnections == 0 {
-		maxOpenConnections = cfg.MaxConnections
-	}
 	if maxOpenConnections != 0 {
 		db.SetMaxOpenConns(maxOpenConnections)
 	}
@@ -134,9 +125,6 @@ func configurePool(db *sqlx.DB, cfg Config) {
 		db.SetMaxIdleConns(cfg.MaxIdleConnections)
 	}
 	connectionMaxLifetime := cfg.ConnectionMaxLifetime
-	if connectionMaxLifetime == 0 {
-		connectionMaxLifetime = cfg.ConnectionLifetime
-	}
 	if connectionMaxLifetime != 0 {
 		db.SetConnMaxLifetime(connectionMaxLifetime)
 	}

@@ -42,14 +42,6 @@ type Config struct {
 	// TLSConfig enables TLS when non-nil. It is shallow-cloned when the client is
 	// created. Callers must not mutate referenced data after client creation.
 	TLSConfig *tls.Config
-
-	// MaxConnections is a deprecated compatibility alias for
-	// MaxActiveConnections. MaxActiveConnections takes precedence when non-zero.
-	MaxConnections int
-	// ConnectionLifetime is a deprecated compatibility alias for
-	// ConnectionMaxLifetime. ConnectionMaxLifetime takes precedence when
-	// non-zero.
-	ConnectionLifetime time.Duration
 }
 
 // Client is a convenience interface over the Redis commands demonstrated by Go
@@ -96,15 +88,6 @@ func OpenClient(ctx context.Context, dsn DSN, cfg Config) (Client, error) {
 }
 
 func options(dsn DSN, cfg Config) *goredis.Options {
-	maxActiveConnections := cfg.MaxActiveConnections
-	if maxActiveConnections == 0 {
-		maxActiveConnections = cfg.MaxConnections
-	}
-	connectionMaxLifetime := cfg.ConnectionMaxLifetime
-	if connectionMaxLifetime == 0 {
-		connectionMaxLifetime = cfg.ConnectionLifetime
-	}
-
 	return &goredis.Options{
 		Addr:                  dsn.Addr(),
 		Password:              dsn.Password,
@@ -113,8 +96,8 @@ func options(dsn DSN, cfg Config) *goredis.Options {
 		ReadTimeout:           cfg.ReadTimeout,
 		WriteTimeout:          cfg.WriteTimeout,
 		PoolTimeout:           cfg.PoolTimeout,
-		MaxActiveConns:        maxActiveConnections,
-		ConnMaxLifetime:       connectionMaxLifetime,
+		MaxActiveConns:        cfg.MaxActiveConnections,
+		ConnMaxLifetime:       cfg.ConnectionMaxLifetime,
 		TLSConfig:             cloneTLSConfig(cfg.TLSConfig),
 		ContextTimeoutEnabled: true,
 	}

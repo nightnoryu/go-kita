@@ -8,7 +8,7 @@
     <a href="https://github.com/nightnoryu/go-kita/releases"><img src="https://img.shields.io/github/release/nightnoryu/go-kita.svg?cache-control=no-cache"></a>
     <a href="https://pkg.go.dev/github.com/nightnoryu/go-kita"><img src="https://pkg.go.dev/badge/github.com/nightnoryu/go-kita.svg?cache-control=no-cache"></a>
     <a href="https://github.com/nightnoryu/go-kita/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nightnoryu/go-kita?cache-control=no-cache"></a>
-	<a href="https://github.com/nightnoryu/go-kita/graphs/commit-activity" target="_blank"><img src="https://img.shields.io/github/commit-activity/m/nightnoryu/go-kita" alt="GitHub commit activity"></a>
+	<a href="https://github.com/nightnoryu/go-kita/graphs/commit-activity" target="_blank"><img src="https://img.shields.io/github/commit-activity/m/nightnoryu/go-kita?cache-control=no-cache" alt="GitHub commit activity"></a>
     <a href="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml"><img src="https://github.com/nightnoryu/go-kita/actions/workflows/ci.yml/badge.svg?cache-control=no-cache"></a>
 </p>
 

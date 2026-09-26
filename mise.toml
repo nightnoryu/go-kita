@@ -17,6 +17,10 @@ run = "go mod tidy"
 [tasks.build]
 depends = [ "modules" ]
 run = "go build -trimpath -v -o /dev/null ./..."
+sources = [
+    "go.*",
+    "**/*.go",
+]
 
 [tasks.check]
 depends = [ "lint", "test", "test:race" ]

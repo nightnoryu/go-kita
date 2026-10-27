@@ -1,6 +1,6 @@
 module github.com/nightnoryu/go-kita
 
-go 1.26.8
+go 1.26.10
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1

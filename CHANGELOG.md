@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.1
+
+- security fixes
+
 ## v1.9.0
 
 - document package ownership, context, concurrency, error, and shutdown

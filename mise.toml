@@ -1,6 +1,6 @@
 [tools]
-go = "1.26.10"
-golangci-lint = "2.12.2"
+go = "1.27.3"
+golangci-lint = "2.15.0"
 
 [tasks.default]
 run = [
@@ -10,7 +10,7 @@ run = [
 
 [tasks.modules]
 run = "go mod download"
-sources = [ "go.mod", "go.sum", "../mise.toml" ]
+sources = [ "go.*" ]
 outputs = { auto = true }
 
 [tasks.tidy]
@@ -18,10 +18,10 @@ run = "go mod tidy"
 
 [tasks.build]
 depends = [ "modules" ]
-run = "go build -trimpath -v -o /dev/null ./..."
+run = "go build -o /dev/null ./..."
 sources = [
-    "go.*",
     "**/*.go",
+    "go.*",
 ]
 
 [tasks.check]
